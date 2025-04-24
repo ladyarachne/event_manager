@@ -76,8 +76,8 @@ class UserService:
     @classmethod
     async def update(cls, session: AsyncSession, user_id: UUID, update_data: Dict[str, str]) -> Optional[User]:
         try:
-            # validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
-            validated_data = UserUpdate(**update_data).dict(exclude_unset=True)
+            # Use model_dump instead of dict for Pydantic v2 compatibility
+            validated_data = UserUpdate(**update_data).model_dump(exclude_unset=True)
 
             if 'password' in validated_data:
                 validated_data['hashed_password'] = hash_password(validated_data.pop('password'))
