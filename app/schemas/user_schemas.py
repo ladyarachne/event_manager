@@ -46,6 +46,31 @@ def validate_url(url: Optional[str]) -> Optional[str]:
         raise ValueError('Invalid URL format')
     return url
 
+def validate_profile_picture_url(url: Optional[str]) -> Optional[str]:
+    """
+    Validate that the profile picture URL points to a valid image format.
+    Supported formats: jpg, jpeg, png, gif, webp, svg
+    """
+    if url is None:
+        return url
+    
+    # First validate that it's a valid URL
+    url = validate_url(url)
+    
+    # Then check if it has a valid image extension
+    valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg']
+    has_valid_extension = any(url.lower().endswith(ext) for ext in valid_extensions)
+    
+    # Also check for URLs that might have query parameters after the extension
+    if not has_valid_extension:
+        url_path = url.split('?')[0]  # Remove query parameters
+        has_valid_extension = any(url_path.lower().endswith(ext) for ext in valid_extensions)
+    
+    if not has_valid_extension:
+        raise ValueError('Profile picture URL must point to a valid image format (jpg, jpeg, png, gif, webp, svg)')
+    
+    return url
+
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="john.doe@example.com")
     nickname: Optional[str] = Field(None, min_length=3, max_length=50, pattern=r'^[\w-]+$', example=generate_nickname())
@@ -56,7 +81,8 @@ class UserBase(BaseModel):
     linkedin_profile_url: Optional[str] =Field(None, example="https://linkedin.com/in/johndoe")
     github_profile_url: Optional[str] = Field(None, example="https://github.com/johndoe")
 
-    _validate_urls = validator('profile_picture_url', 'linkedin_profile_url', 'github_profile_url', pre=True, allow_reuse=True)(validate_url)
+    _validate_linkedin_github_urls = validator('linkedin_profile_url', 'github_profile_url', pre=True, allow_reuse=True)(validate_url)
+    _validate_profile_picture = validator('profile_picture_url', pre=True, allow_reuse=True)(validate_profile_picture_url)
  
     class Config:
         from_attributes = True
