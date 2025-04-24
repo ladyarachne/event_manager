@@ -67,3 +67,11 @@ def test_user_base_invalid_email(user_base_data_invalid):
     
     assert "value is not a valid email address" in str(exc_info.value)
     assert "john.doe.example.com" in str(exc_info.value)
+
+# Test for bio field max length validation
+def test_bio_max_length(user_base_data):
+    # Create a bio that exceeds the maximum length of 500 characters
+    user_base_data["bio"] = "a" * 501
+    with pytest.raises(ValidationError) as exc_info:
+        UserBase(**user_base_data)
+    assert "ensure this value has at most 500 characters" in str(exc_info.value)
