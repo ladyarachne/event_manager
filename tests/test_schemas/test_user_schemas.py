@@ -76,15 +76,47 @@ def test_user_base_nickname_invalid(nickname, user_base_data):
 # Parametrized tests for URL validation
 @pytest.mark.parametrize("url", ["http://valid.com/profile.jpg", "https://valid.com/profile.png", None])
 def test_user_base_url_valid(url, user_base_data):
+    # Use linkedin_profile_url for general URL validation
+    user_base_data["linkedin_profile_url"] = url
+    user = UserBase(**user_base_data)
+    assert user.linkedin_profile_url == url
+
+@pytest.mark.parametrize("url", ["ftp://invalid.com/profile.jpg", "http//invalid", "https//invalid"])
+def test_user_base_url_invalid(url, user_base_data):
+    # Use linkedin_profile_url for general URL validation
+    user_base_data["linkedin_profile_url"] = url
+    with pytest.raises(ValidationError):
+        UserBase(**user_base_data)
+
+# Tests for profile picture URL validation
+@pytest.mark.parametrize("url", [
+    "http://example.com/profile.jpg",
+    "https://example.com/images/profile.jpeg",
+    "https://example.com/photos/user.png",
+    "https://example.com/avatar.gif",
+    "https://example.com/profile.webp",
+    "https://example.com/icon.svg",
+    "https://example.com/profile.jpg?size=large",  # URL with query parameters
+    None
+])
+def test_valid_profile_picture_url(url, user_base_data):
     user_base_data["profile_picture_url"] = url
     user = UserBase(**user_base_data)
     assert user.profile_picture_url == url
 
-@pytest.mark.parametrize("url", ["ftp://invalid.com/profile.jpg", "http//invalid", "https//invalid"])
-def test_user_base_url_invalid(url, user_base_data):
+@pytest.mark.parametrize("url", [
+    "http://example.com/profile.txt",
+    "https://example.com/images/profile.pdf",
+    "https://example.com/photos/user.doc",
+    "https://example.com/avatar.exe",
+    "https://example.com/profile",  # No extension
+    "https://example.com/profile.invalid"
+])
+def test_invalid_profile_picture_url(url, user_base_data):
     user_base_data["profile_picture_url"] = url
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError) as exc_info:
         UserBase(**user_base_data)
+    assert "Profile picture URL must point to a valid image format" in str(exc_info.value)
 
 # Tests for UserBase
 def test_user_base_invalid_email(user_base_data_invalid):
