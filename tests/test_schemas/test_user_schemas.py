@@ -34,6 +34,32 @@ def test_login_request_valid(login_request_data):
     assert login.email == login_request_data["email"]
     assert login.password == login_request_data["password"]
 
+# Tests for password validation
+@pytest.mark.parametrize("password", [
+    "Abcdef1!", 
+    "Password123!", 
+    "Complex@Pass1", 
+    "A1b2C3d4!"
+])
+def test_valid_password(password, user_create_data):
+    user_create_data["password"] = password
+    user = UserCreate(**user_create_data)
+    assert user.password == password
+
+@pytest.mark.parametrize("password, error_msg", [
+    ("short1!", "Password must be at least 8 characters long"),
+    ("a" * 101 + "A1!", "Password must be at most 100 characters long"),
+    ("abcdef1!", "Password must contain at least one uppercase letter"),
+    ("ABCDEF1!", "Password must contain at least one lowercase letter"),
+    ("Abcdefgh!", "Password must contain at least one number"),
+    ("Abcdef123", "Password must contain at least one special character")
+])
+def test_invalid_password(password, error_msg, user_create_data):
+    user_create_data["password"] = password
+    with pytest.raises(ValidationError) as exc_info:
+        UserCreate(**user_create_data)
+    assert error_msg in str(exc_info.value)
+
 # Parametrized tests for nickname and email validation
 @pytest.mark.parametrize("nickname", ["test_user", "test-user", "testuser123", "123test"])
 def test_user_base_nickname_valid(nickname, user_base_data):

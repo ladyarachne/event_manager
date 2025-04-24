@@ -8,6 +8,30 @@ import re
 
 from app.utils.nickname_gen import generate_nickname
 
+def validate_password(password: str) -> str:
+    """
+    Validate password complexity requirements:
+    - Minimum length of 8 characters
+    - Maximum length of 100 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
+    - At least one special character
+    """
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters long")
+    if len(password) > 100:
+        raise ValueError("Password must be at most 100 characters long")
+    if not re.search(r'[A-Z]', password):
+        raise ValueError("Password must contain at least one uppercase letter")
+    if not re.search(r'[a-z]', password):
+        raise ValueError("Password must contain at least one lowercase letter")
+    if not re.search(r'[0-9]', password):
+        raise ValueError("Password must contain at least one number")
+    if not re.search(r'[^A-Za-z0-9]', password):
+        raise ValueError("Password must contain at least one special character")
+    return password
+
 class UserRole(str, Enum):
     ANONYMOUS = "ANONYMOUS"
     AUTHENTICATED = "AUTHENTICATED"
@@ -39,7 +63,9 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     email: EmailStr = Field(..., example="john.doe@example.com")
-    password: str = Field(..., example="Secure*1234")
+    password: str = Field(..., min_length=8, max_length=100, example="Secure*1234")
+    
+    _validate_password = validator('password', allow_reuse=True)(validate_password)
 
 class UserUpdate(UserBase):
     email: Optional[EmailStr] = Field(None, example="john.doe@example.com")
@@ -50,6 +76,9 @@ class UserUpdate(UserBase):
     profile_picture_url: Optional[str] = Field(None, example="https://example.com/profiles/john.jpg")
     linkedin_profile_url: Optional[str] =Field(None, example="https://linkedin.com/in/johndoe")
     github_profile_url: Optional[str] = Field(None, example="https://github.com/johndoe")
+    password: Optional[str] = Field(None, min_length=8, max_length=100, example="Secure*1234")
+    
+    _validate_password = validator('password', allow_reuse=True)(validate_password)
 
     @root_validator(pre=True)
     def check_at_least_one_value(cls, values):
