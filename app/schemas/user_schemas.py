@@ -1,12 +1,31 @@
 from builtins import ValueError, any, bool, str
 from pydantic import BaseModel, EmailStr, Field, validator, root_validator
-from typing import Optional, List
+from typing import Optional, List, Set
 from datetime import datetime
 from enum import Enum
 import uuid
 import re
 
 from app.utils.nickname_gen import generate_nickname
+
+# List of allowed email domains
+ALLOWED_EMAIL_DOMAINS: Set[str] = {
+    "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", 
+    "example.com", "company.com", "university.edu", "organization.org"
+}
+
+def validate_email_domain(email: str) -> str:
+    """
+    Validate that the email domain is in the allowed list.
+    """
+    if not email or '@' not in email:
+        raise ValueError("Invalid email format")
+    
+    domain = email.split('@')[-1].lower()
+    if domain not in ALLOWED_EMAIL_DOMAINS:
+        raise ValueError(f"Email domain '{domain}' is not allowed. Please use one of the allowed domains.")
+    
+    return email
 
 def validate_password(password: str) -> str:
     """
@@ -48,6 +67,8 @@ def validate_url(url: Optional[str]) -> Optional[str]:
 
 class UserBase(BaseModel):
     email: EmailStr = Field(..., example="john.doe@example.com")
+    
+    _validate_email_domain = validator('email', allow_reuse=True)(validate_email_domain)
     nickname: Optional[str] = Field(None, min_length=3, max_length=50, pattern=r'^[\w-]+$', example=generate_nickname())
     first_name: Optional[str] = Field(None, example="John")
     last_name: Optional[str] = Field(None, example="Doe")
