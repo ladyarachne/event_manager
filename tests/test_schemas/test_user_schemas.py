@@ -41,7 +41,7 @@ def test_user_base_nickname_valid(nickname, user_base_data):
     user = UserBase(**user_base_data)
     assert user.nickname == nickname
 
-@pytest.mark.parametrize("nickname", ["test user", "test?user", "", "us"])
+@pytest.mark.parametrize("nickname", ["test user", "test?user", "", "us", "a" * 51])
 def test_user_base_nickname_invalid(nickname, user_base_data):
     user_base_data["nickname"] = nickname
     with pytest.raises(ValidationError):
